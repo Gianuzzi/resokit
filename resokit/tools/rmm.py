@@ -1,3 +1,9 @@
+# This file is part of the
+#   ResoKit Project (https://github.com/Gianuzzi/resokit).
+# Copyright (c) 2024, Emmanuel Gianuzzi
+# License: MIT
+#   Full Text: https://github.com/Gianuzzi/resokit/blob/master/LICENSE
+
 import numpy as np
 
 G = 39.476926421373
