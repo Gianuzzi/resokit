@@ -19,4 +19,5 @@
 # IMPORTS
 # =============================================================================
 
-from .databases import download_database, load_database  # noqa: F401
+from .databases import download_dataset, load_dataset  # noqa: F401
+from .query import query_from_db  # noqa
