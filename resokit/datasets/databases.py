@@ -49,7 +49,7 @@ ZIPNAME = "datasets.zip"
 # ============================================================================
 
 
-def __unzip_database(filename: str = ""):
+def __unzip_database(filename: str = "", extract: bool = False):
     """Unzip the database."""
 
     # Get the full path
@@ -64,11 +64,17 @@ def __unzip_database(filename: str = ""):
         if filename:
             if filename not in zip_ref.namelist():
                 raise ValueError(f"{filename} not found in {ZIPNAME}.")
-            print(f"Unzipping {filename} from {ZIPNAME}...")
-            zip_ref.extract(filename, PATH)
+            if extract:
+                print(f"Unzipping {filename} from {ZIPNAME}...")
+                zip_ref.extract(filename, PATH)
+            else:
+                from io import BytesIO
+                return BytesIO(zip_ref.read(filename))
         else:
             zip_ref.extractall(PATH)
             print(f"{ZIPNAME} fully unzipped.")
+
+    return
 
 
 def __get_filename(source: str, fmt: str):
@@ -129,9 +135,25 @@ def load_database(
     download: bool = False,
     check_age: bool = True,
     check_length: bool = False,
+    extract: bool = False,
 ):
     """
     Load nasa or exoplanet.eu dataset.
+
+    Parameters
+    ----------
+    source : str
+        Source of the data: 'eu' or 'nasa'.
+    fmt : str, optional (default='csv')
+        Format of the data: 'csv' or 'votable'.
+    download : bool, optional (default=False)
+        Download the data if it does not exist.
+    check_age : bool, optional (default=True)
+        Check the age of the file.
+    check_length : bool, optional (default=False)
+        Check the length of the database.
+    extract : bool, optional (default=False)
+        Extract the file from the ZIP archive.
     """
 
     # Use lowercase
@@ -151,7 +173,7 @@ def load_database(
     # Check if the file exists
     if (not FULL_PATH.exists()) and (ZIP_PATH.exists()):
         # Unzip the file
-        __unzip_database(FILENAME)
+        zipped = __unzip_database(FILENAME, extract=extract)
     elif not FULL_PATH.exists():
         print(f"{FILENAME} not found.")
         if not download:
@@ -166,13 +188,14 @@ def load_database(
         print("Run download_database to download it again.")
 
     # Load the data
+    load_path = FULL_PATH if zipped is None else zipped
     if fmt in ["votable", "vot"]:
         # votable: astropy + pandas
-        data = Table.read(FULL_PATH).to_pandas()
+        data = Table.read(load_path).to_pandas()
     else:
         # csv: pandas
         skiprows = 291 if source == "nasa" else 0
-        data = pd.read_csv(FULL_PATH, skiprows=skiprows)
+        data = pd.read_csv(load_path, skiprows=skiprows)
 
     # Check the length of the database
     if check_length:
@@ -186,7 +209,10 @@ def load_database(
             print(f"Number of planets in the {source} database:", length)
     # Check the age of the file
     elif check_age:
-        age = _get_database_age(source, fmt)
+        if zipped is not None:
+            age = datetime.datetime.fromtimestamp(ZIP_PATH.stat().st_mtime)
+        else:
+            age = _get_database_age(source, fmt)
         print(f"{FILENAME} last modified: {age}")
         # Check if the file is too old
         if age < datetime.datetime.now() - datetime.timedelta(days=5):
