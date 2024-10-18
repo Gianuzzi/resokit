@@ -32,8 +32,8 @@ def load_integration(
 
     """
     
-    if usecols is not None:
-        assert len(names) == usecols, "usecols doesn't match names length"
+    if (usecols is not None) and (len(names) != len(usecols)): 
+        raise Exception("usecols doesn't match names length")
 
     # allowed inputs
     elem_space = {
@@ -44,7 +44,7 @@ def load_integration(
         "inc": None,
         "M": None,
         "w": None,
-        "W": None,
+        "Omega": None,
         "_": None,
         "mass": None,
     }
@@ -77,8 +77,12 @@ def load_integration(
     # calculate mean longitude
     for i, ipl in enumerate(planets):
         ipl["lam"] = (ipl["M"] + ipl["w"] + ipl["W"]) % 360.0
-
-    return planets
+    
+    # star = Star
+    # pl1 = DynamicPlanet(df1)
+    # pl2 = DynamicPlanet(df2)
+    # sys1 = DynamicSystem(star,[pl1,pl2])
+    return sys1
 
 
 pls = load_integration(
