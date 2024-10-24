@@ -21,8 +21,7 @@ _PLNAME_KWARGS = {
 }
 
 _CONSTANT_KWARGS = {
-    "validator": attrs.validators.instance_of((int, float)),
-    "converter": float,
+    "validator": attrs.validators.instance_of((int,float,type(None))),
     "default": np.nan,
 }
 
@@ -41,28 +40,28 @@ _INTEGER_KWARGS = {
 @attrs.define(frozen=False, slots=True, repr=False)
 class DynamicPlanet:
     """Time series for the evolution of a planet"""
-
+    
     # input parameters
     time_series_table: pd.DataFrame = attrs.field(**_TABLE_KWARGS)
     name: str = attrs.field(**_PLNAME_KWARGS)
 
-    times: list = attrs.field(init=False, **_TIME_SERIES_KWARGS)  # days
-    a: list = attrs.field(init=False, **_TIME_SERIES_KWARGS)  # AU
-    e: list = attrs.field(init=False, **_TIME_SERIES_KWARGS)  #
-    inc: list = attrs.field(init=False, **_TIME_SERIES_KWARGS)  # deg
-    m_anom: list = attrs.field(init=False, **_TIME_SERIES_KWARGS)  # M , deg
-    w: list = attrs.field(init=False, **_TIME_SERIES_KWARGS)  # deg
-    Omega: list = attrs.field(init=False, **_TIME_SERIES_KWARGS)  # deg
-
+    times: list = attrs.field(**_TIME_SERIES_KWARGS)  # days
+    a: list = attrs.field(**_TIME_SERIES_KWARGS)  # AU
+    e: list = attrs.field(**_TIME_SERIES_KWARGS)  #
+    inc: list = attrs.field(**_TIME_SERIES_KWARGS)  # deg
+    m_anom: list = attrs.field(**_TIME_SERIES_KWARGS)  # M , deg
+    w: list = attrs.field(**_TIME_SERIES_KWARGS)  # deg
+    Omega: list = attrs.field(**_TIME_SERIES_KWARGS)  # deg
+    
     mass: float = attrs.field(**_CONSTANT_KWARGS)  # earth masses
     radius: float = attrs.field(**_CONSTANT_KWARGS)  # earth radii
 
     is_star: bool = attrs.field(**_BOOL_KWARGS)
 
-    def __attrs_post_init__(self):
-        table_elems = self.time_series_table.columns
-        for elem in table_elems:
-            setattr(self, elem, self.time_series_table[elem])
+    # def __attrs_post_init__(self):
+    #     table_elems = self.time_series_table.columns
+    #     for elem in table_elems:
+    #         setattr(self, elem, self.time_series_table[elem])
 
     def planet_method(self): ...
 
@@ -75,10 +74,10 @@ class Star:
 
     """
 
-    mass: float = attrs.field(**_CONSTANT_KWARGS)  # solar masses
-    radius: float = attrs.field(**_CONSTANT_KWARGS)  # solar radii
-    teff: float = attrs.field(**_CONSTANT_KWARGS)  # kelvin
-    met: float = attrs.field(**_CONSTANT_KWARGS)
+    mass: float = attrs.field(init=False,**_CONSTANT_KWARGS)  # solar masses
+    radius: float = attrs.field(init=False,**_CONSTANT_KWARGS)  # solar radii
+    teff: float = attrs.field(init=False,**_CONSTANT_KWARGS)  # kelvin
+    met: float = attrs.field(init=False,**_CONSTANT_KWARGS)
 
     def star_method(self): ...
 
