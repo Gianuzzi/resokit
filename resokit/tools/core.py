@@ -1,12 +1,18 @@
-import attrs
 import numpy as np
+import pandas as pd
+import attrs
 
+# ####--------------------- FORMATOS DE VARIABLES
 _SEQUENCE_TYPES = (list, tuple, np.ndarray)
-
 _TIME_SERIES_KWARGS = {
     "validator": attrs.validators.instance_of(_SEQUENCE_TYPES),
     "converter": np.asarray,
     "default": [np.nan],
+}
+
+_TABLE_KWARGS = {
+    "validator": attrs.validators.instance_of(pd.DataFrame),
+    "factory": pd.DataFrame,
 }
 
 _PLNAME_KWARGS = {
@@ -31,28 +37,38 @@ _INTEGER_KWARGS = {
 }
 
 
-@attrs.define()
+#####--------------------- DynamicPlanet
+@attrs.define(frozen=False, slots=True, repr=False)
 class DynamicPlanet:
     """Time series for the evolution of a planet"""
 
     # input parameters
+    time_series_table: pd.DataFrame = attrs.field(**_TABLE_KWARGS)
     name: str = attrs.field(**_PLNAME_KWARGS)
 
-    times: list = attrs.field(**_TIME_SERIES_KWARGS)  # days
-    a: list = attrs.field(**_TIME_SERIES_KWARGS)  # AU
-    e: list = attrs.field(**_TIME_SERIES_KWARGS)  #
-    inc: list = attrs.field(**_TIME_SERIES_KWARGS)  # deg
-    M: list = attrs.field(**_TIME_SERIES_KWARGS)  # deg
-    w: list = attrs.field(**_TIME_SERIES_KWARGS)  # deg
-    Omega: list = attrs.field(**_TIME_SERIES_KWARGS)  # deg
+    times: list = attrs.field(init=False, **_TIME_SERIES_KWARGS)  # days
+    a: list = attrs.field(init=False, **_TIME_SERIES_KWARGS)  # AU
+    e: list = attrs.field(init=False, **_TIME_SERIES_KWARGS)  #
+    inc: list = attrs.field(init=False, **_TIME_SERIES_KWARGS)  # deg
+    m_anom: list = attrs.field(init=False, **_TIME_SERIES_KWARGS)  # M , deg
+    w: list = attrs.field(init=False, **_TIME_SERIES_KWARGS)  # deg
+    Omega: list = attrs.field(init=False, **_TIME_SERIES_KWARGS)  # deg
 
     mass: float = attrs.field(**_CONSTANT_KWARGS)  # earth masses
     radius: float = attrs.field(**_CONSTANT_KWARGS)  # earth radii
 
     is_star: bool = attrs.field(**_BOOL_KWARGS)
 
+    def __attrs_post_init__(self):
+        table_elems = self.time_series_table.columns
+        for elem in table_elems:
+            setattr(self, elem, self.time_series_table[elem])
 
-@attrs.define()
+    def planet_method(self): ...
+
+
+#####--------------------- STAR
+@attrs.define(repr=False)
 class Star:
     """
     Star of the system
@@ -64,7 +80,11 @@ class Star:
     teff: float = attrs.field(**_CONSTANT_KWARGS)  # kelvin
     met: float = attrs.field(**_CONSTANT_KWARGS)
 
+    def star_method(self): ...
 
+
+#####--------------------- DynamicSystem
+#####--------------------- FORMATO DE VARIABLES
 _STAR_OBJECT_KWARGS = {
     "validator": attrs.validators.instance_of(Star),
     "default": Star(),  # empty star
@@ -76,7 +96,7 @@ _PLANET_OBJECT_KWARGS = {
 }
 
 
-@attrs.define()
+@attrs.define(repr=False)
 class DynamicSystem:
     """Global properties of the system"""
 
@@ -96,14 +116,11 @@ class DynamicSystem:
 
         for ith, planet in enumerate(self.planets):
             if not isinstance(planet, DynamicPlanet):
-                raise TypeError(f"planet {ith+1} must be of type DynamicPlanet")
+                raise TypeError(
+                    f"planet {ith+1} must be of type DynamicPlanet"
+                )
 
         # Additional calculated attributes
         self.npl = len(self.planets)
 
-
-pl1 = DynamicPlanet()
-pl2 = DynamicPlanet()
-st1 = Star()
-sys1 = DynamicSystem(planets=[pl1, pl2])
-sys2 = DynamicSystem(planets=[pl1, pl2, pl1])
+    def system_method(self): ...
